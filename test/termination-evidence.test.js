@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {gradientDescent} from '../src/gradient-descent.js';
+test('unrepresentable descent steps report stagnation rather than false stationarity',()=>{const r=gradientDescent({dimension:1,f:x=>x[0],g:()=>[1]},[1e20]);assert.equal(r.status,'stagnated');assert.equal(r.gradientNorm,1);});
+test('domain-invalid line-search trials shrink while accepted iterates remain feasible',()=>{const p={dimension:1,f:([x])=>(x-2)**2-Math.log(x),g:([x])=>[2*(x-2)-1/x]},r=gradientDescent(p,[10],{gtol:1e-7});assert.equal(r.status,'converged');assert(r.trace.every(p=>p.x[0]>0));assert(Math.abs(r.x[0]-(1+Math.sqrt(6)/2))<1e-6);});
