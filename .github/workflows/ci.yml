@@ -44,5 +44,5 @@ jobs:
         with:
           node-version: 24
       - run: python -m venv .oracle-venv
-      - run: .oracle-venv/bin/python -m pip install --only-binary=:all: -r validation/requirements.txt
+      - run: '.oracle-venv/bin/python -m pip install --only-binary=:all: -r validation/requirements.txt'
       - run: .oracle-venv/bin/python validation/scipy_oracles.py
