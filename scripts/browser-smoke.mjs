@@ -79,13 +79,11 @@ try {
     loss: 'huber',
     options: { maxIterations: 1000, gtol: 1e-6, memory: 2 },
   };
-  await page
-    .locator('#file')
-    .setInputFiles({
-      name: 'case.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(JSON.stringify(imported)),
-    });
+  await page.locator('#file').setInputFiles({
+    name: 'case.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(imported)),
+  });
   await wait(() => document.querySelector('#status').textContent.startsWith('Experiment imported'));
   await page.locator('#run').click();
   await idle();
