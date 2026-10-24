@@ -28,5 +28,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/VictorOdoyo/numerical-optimization-lab.git"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1",
+    "prettier": "3.6.2"
   }
 }
