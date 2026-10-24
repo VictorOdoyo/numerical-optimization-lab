@@ -1,6 +1,40 @@
-import {vector,requireThat,finite} from './validation.js';import {norm,scale} from './vector.js';
-export function boxProject(x,lower,upper){requireThat(x.length===lower.length&&x.length===upper.length,'Box dimensions differ');return x.map((v,i)=>{finite(lower[i]);finite(upper[i]);requireThat(lower[i]<=upper[i],'Box lower bound exceeds upper bound');return Math.max(lower[i],Math.min(upper[i],v));});}
-export function softThreshold(x,threshold){requireThat(threshold>=0&&Number.isFinite(threshold),'Threshold must be nonnegative');return x.map(v=>Math.sign(v)*Math.max(0,Math.abs(v)-threshold));}
-export function simplexProject(point,radius=1){const x=vector(point);requireThat(radius>=0&&Number.isFinite(radius),'Simplex radius must be nonnegative');if(radius===0)return x.map(()=>0);const sorted=[...x].sort((a,b)=>b-a);let sum=0,theta=0;for(let i=0;i<sorted.length;i++){sum+=sorted[i];const t=(sum-radius)/(i+1);if(sorted[i]>t)theta=t;}return x.map(v=>Math.max(0,v-theta));}
-export function l1Project(x,radius=1){requireThat(radius>=0&&Number.isFinite(radius),'L1 radius must be nonnegative');if(x.reduce((s,v)=>s+Math.abs(v),0)<=radius)return[...x];const absolute=simplexProject(x.map(Math.abs),radius);return absolute.map((v,i)=>Math.sign(x[i])*v);}
-export function l2Project(x,radius=1){requireThat(radius>=0&&Number.isFinite(radius),'L2 radius must be nonnegative');const length=norm(x);return length<=radius?[...x]:scale(x,radius/length);}
+import { vector, requireThat, finite } from './validation.js';
+import { norm, scale } from './vector.js';
+export function boxProject(x, lower, upper) {
+  requireThat(x.length === lower.length && x.length === upper.length, 'Box dimensions differ');
+  return x.map((v, i) => {
+    finite(lower[i]);
+    finite(upper[i]);
+    requireThat(lower[i] <= upper[i], 'Box lower bound exceeds upper bound');
+    return Math.max(lower[i], Math.min(upper[i], v));
+  });
+}
+export function softThreshold(x, threshold) {
+  requireThat(threshold >= 0 && Number.isFinite(threshold), 'Threshold must be nonnegative');
+  return x.map((v) => Math.sign(v) * Math.max(0, Math.abs(v) - threshold));
+}
+export function simplexProject(point, radius = 1) {
+  const x = vector(point);
+  requireThat(radius >= 0 && Number.isFinite(radius), 'Simplex radius must be nonnegative');
+  if (radius === 0) return x.map(() => 0);
+  const sorted = [...x].sort((a, b) => b - a);
+  let sum = 0,
+    theta = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    sum += sorted[i];
+    const t = (sum - radius) / (i + 1);
+    if (sorted[i] > t) theta = t;
+  }
+  return x.map((v) => Math.max(0, v - theta));
+}
+export function l1Project(x, radius = 1) {
+  requireThat(radius >= 0 && Number.isFinite(radius), 'L1 radius must be nonnegative');
+  if (x.reduce((s, v) => s + Math.abs(v), 0) <= radius) return [...x];
+  const absolute = simplexProject(x.map(Math.abs), radius);
+  return absolute.map((v, i) => Math.sign(x[i]) * v);
+}
+export function l2Project(x, radius = 1) {
+  requireThat(radius >= 0 && Number.isFinite(radius), 'L2 radius must be nonnegative');
+  const length = norm(x);
+  return length <= radius ? [...x] : scale(x, radius / length);
+}

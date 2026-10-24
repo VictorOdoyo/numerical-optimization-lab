@@ -1,3 +1,28 @@
-export function el(tag,attrs={},...children){const node=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==='class')node.className=v;else if(k.startsWith('on'))node[k]=v;else if(v!==false&&v!==null&&v!==undefined)node.setAttribute(k,v===true?'':String(v));}for(const child of children.flat())if(child!==null&&child!==undefined)node.append(child instanceof Node?child:document.createTextNode(String(child)));return node;}
-export function number(value){return value===null||value===undefined||!Number.isFinite(value)?'—':Math.abs(value)>=1e4||Math.abs(value)>0&&Math.abs(value)<.001?value.toExponential(2):value.toFixed(3);}
-export function download(text,name,type='application/json'){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+export function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') node.className = v;
+    else if (k.startsWith('on')) node[k] = v;
+    else if (v !== false && v !== null && v !== undefined)
+      node.setAttribute(k, v === true ? '' : String(v));
+  }
+  for (const child of children.flat())
+    if (child !== null && child !== undefined)
+      node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  return node;
+}
+export function number(value) {
+  return value === null || value === undefined || !Number.isFinite(value)
+    ? '—'
+    : Math.abs(value) >= 1e4 || (Math.abs(value) > 0 && Math.abs(value) < 0.001)
+      ? value.toExponential(2)
+      : value.toFixed(3);
+}
+export function download(text, name, type = 'application/json') {
+  const url = URL.createObjectURL(new Blob([text], { type })),
+    a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

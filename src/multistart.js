@@ -1,2 +1,23 @@
-import {random} from './random.js';import {solveCase} from './minimize.js';import {integer,requireThat} from './validation.js';
-export function multiStart(c,method,{runs=8,seed=42,options={}}={}){integer(runs,'runs',1,64);requireThat(c.meta.domain&&c.meta.task==='smooth','Multistart requires a smooth bounded sampling domain');const rng=random(seed),results=[];for(let i=0;i<runs;i++){const start=c.meta.domain.map(([a,b])=>a+(b-a)*rng());results.push({...solveCase(c,method,{start,options}),start});}const finite=results.filter(r=>Number.isFinite(r.f)).sort((a,b)=>a.f-b.f);return{runs:results,best:finite[0]??null,seed,statement:'Best observed local result; no global certificate'};}
+import { random } from './random.js';
+import { solveCase } from './minimize.js';
+import { integer, requireThat } from './validation.js';
+export function multiStart(c, method, { runs = 8, seed = 42, options = {} } = {}) {
+  integer(runs, 'runs', 1, 64);
+  requireThat(
+    c.meta.domain && c.meta.task === 'smooth',
+    'Multistart requires a smooth bounded sampling domain',
+  );
+  const rng = random(seed),
+    results = [];
+  for (let i = 0; i < runs; i++) {
+    const start = c.meta.domain.map(([a, b]) => a + (b - a) * rng());
+    results.push({ ...solveCase(c, method, { start, options }), start });
+  }
+  const finite = results.filter((r) => Number.isFinite(r.f)).sort((a, b) => a.f - b.f);
+  return {
+    runs: results,
+    best: finite[0] ?? null,
+    seed,
+    statement: 'Best observed local result; no global certificate',
+  };
+}

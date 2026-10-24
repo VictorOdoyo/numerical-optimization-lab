@@ -1,3 +1,172 @@
-import {el} from './dom.js';
-export function drawLandscape(canvas,meta,plot,result,progress=1,start=meta.start){const ctx=canvas.getContext('2d'),W=900,H=620,pad=48,w=W-2*pad,h=H-2*pad;canvas.width=W;canvas.height=H;ctx.fillStyle='#fbfcfe';ctx.fillRect(0,0,W,H);if(!meta.domain){const values=result?.x??start,max=Math.max(1,...values.map(Math.abs));ctx.font='18px system-ui';ctx.fillStyle='#6f88a7';ctx.fillText('Sparse model / coefficient estimates',pad,40);for(let i=0;i<values.length;i++){const bw=w/values.length*.55,x=pad+(i+.2)*w/values.length,y=H/2,height=-values[i]/max*h*.4;ctx.fillStyle=values[i]>=0?'#496f9d':'#d9a067';ctx.fillRect(x,Math.min(y,y+height),bw,Math.abs(height));ctx.font='14px monospace';ctx.fillStyle='#7f95ae';ctx.fillText('x'+i,x,H-pad);}ctx.strokeStyle='#cad5e3';ctx.beginPath();ctx.moveTo(pad,H/2);ctx.lineTo(W-pad,H/2);ctx.stroke();return;}const[[xmin,xmax],[ymin,ymax]]=meta.domain,toPixel=([x,y])=>[pad+(x-xmin)/(xmax-xmin)*w,H-pad-(y-ymin)/(ymax-ymin)*h];if(plot){const s=plot.surface,n=s.resolution,span=Math.max(Number.MIN_VALUE,s.maximum-s.minimum),palette=[[31,65,111],[78,128,179],[154,193,214],[216,230,224],[247,239,214]];for(let j=0;j<n;j++)for(let i=0;i<n;i++){const v=s.values[j*n+i];if(v===null)continue;const t=Math.max(0,Math.min(1,Math.log1p((v-s.minimum)/(span*.0002))/Math.log1p(1/.0002))),position=t*(palette.length-1),k=Math.min(palette.length-2,Math.floor(position)),f=position-k,color=palette[k].map((a,c)=>Math.round(a+(palette[k+1][c]-a)*f));ctx.fillStyle='rgb('+color.join(',')+')';ctx.fillRect(pad+i/n*w,H-pad-(j+1)/n*h,w/n+1,h/n+1);}ctx.strokeStyle='#ffffff75';ctx.lineWidth=.8;for(const contour of plot.contours){ctx.beginPath();for(const[a,b]of contour.segments){const p=toPixel(a),q=toPixel(b);ctx.moveTo(...p);ctx.lineTo(...q);}ctx.stroke();}}else{ctx.fillStyle='#9aacbe';ctx.font='17px system-ui';ctx.fillText('Computing objective landscape…',pad+100,H/2);}if(meta.bounds){const a=toPixel(meta.bounds.lower),b=toPixel(meta.bounds.upper);ctx.strokeStyle='#284869';ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.strokeRect(a[0],b[1],b[0]-a[0],a[1]-b[1]);ctx.setLineDash([]);}if(meta.task==='qp'){ctx.strokeStyle='#284869';ctx.lineWidth=2;ctx.beginPath();[[0,0],[1,0],[0,1],[0,0]].forEach((p,i)=>i?ctx.lineTo(...toPixel(p)):ctx.moveTo(...toPixel(p)));ctx.stroke();}ctx.strokeStyle='#bac9db';ctx.lineWidth=1;ctx.strokeRect(pad,pad,w,h);ctx.fillStyle='#7d93ad';ctx.font='12px monospace';ctx.textAlign='center';for(let i=0;i<=4;i++){const x=xmin+i/4*(xmax-xmin),y=ymin+i/4*(ymax-ymin);ctx.fillText(x.toFixed(1),pad+i/4*w,H-pad+22);ctx.textAlign='right';ctx.fillText(y.toFixed(1),pad-10,H-pad-i/4*h+4);ctx.textAlign='center';}ctx.font='14px system-ui';ctx.fillText('x₁',W/2,H-8);ctx.save();ctx.translate(13,H/2);ctx.rotate(-Math.PI/2);ctx.fillText('x₂',0,0);ctx.restore();ctx.save();ctx.beginPath();ctx.rect(pad,pad,w,h);ctx.clip();const trace=result?.trace??[],count=Math.max(1,Math.ceil(trace.length*progress)),points=trace.slice(0,count).filter(p=>p.x?.length===2),route=points.map(p=>toPixel(p.x));ctx.strokeStyle='#edac62';ctx.lineWidth=3;ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();route.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.stroke();for(const p of route){ctx.fillStyle='#f2c28b';ctx.beginPath();ctx.arc(...p,2.2,0,2*Math.PI);ctx.fill();}const dot=(point,color,radius)=>{const p=toPixel(point);ctx.fillStyle=color;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(...p,radius,0,2*Math.PI);ctx.fill();ctx.stroke();};dot(start,'#244b78',6);if(points.length)dot(points.at(-1).x,'#eaa257',6);ctx.restore();}
-export function pointAt(canvas,meta,event){if(!meta.domain)return null;const rect=canvas.getBoundingClientRect(),x=(event.clientX-rect.left)/rect.width*900,y=(event.clientY-rect.top)/rect.height*620;if(x<48||x>852||y<48||y>572)return null;return[meta.domain[0][0]+(x-48)/804*(meta.domain[0][1]-meta.domain[0][0]),meta.domain[1][0]+(572-y)/524*(meta.domain[1][1]-meta.domain[1][0])];}
+import { el } from './dom.js';
+export function drawLandscape(canvas, meta, plot, result, progress = 1, start = meta.start) {
+  const ctx = canvas.getContext('2d'),
+    W = 900,
+    H = 620,
+    pad = 48,
+    w = W - 2 * pad,
+    h = H - 2 * pad;
+  canvas.width = W;
+  canvas.height = H;
+  ctx.fillStyle = '#fbfcfe';
+  ctx.fillRect(0, 0, W, H);
+  if (!meta.domain) {
+    const values = result?.x ?? start,
+      max = Math.max(1, ...values.map(Math.abs));
+    ctx.font = '18px system-ui';
+    ctx.fillStyle = '#6f88a7';
+    ctx.fillText('Sparse model / coefficient estimates', pad, 40);
+    for (let i = 0; i < values.length; i++) {
+      const bw = (w / values.length) * 0.55,
+        x = pad + ((i + 0.2) * w) / values.length,
+        y = H / 2,
+        height = (-values[i] / max) * h * 0.4;
+      ctx.fillStyle = values[i] >= 0 ? '#496f9d' : '#d9a067';
+      ctx.fillRect(x, Math.min(y, y + height), bw, Math.abs(height));
+      ctx.font = '14px monospace';
+      ctx.fillStyle = '#7f95ae';
+      ctx.fillText('x' + i, x, H - pad);
+    }
+    ctx.strokeStyle = '#cad5e3';
+    ctx.beginPath();
+    ctx.moveTo(pad, H / 2);
+    ctx.lineTo(W - pad, H / 2);
+    ctx.stroke();
+    return;
+  }
+  const [[xmin, xmax], [ymin, ymax]] = meta.domain,
+    toPixel = ([x, y]) => [
+      pad + ((x - xmin) / (xmax - xmin)) * w,
+      H - pad - ((y - ymin) / (ymax - ymin)) * h,
+    ];
+  if (plot) {
+    const s = plot.surface,
+      n = s.resolution,
+      span = Math.max(Number.MIN_VALUE, s.maximum - s.minimum),
+      palette = [
+        [31, 65, 111],
+        [78, 128, 179],
+        [154, 193, 214],
+        [216, 230, 224],
+        [247, 239, 214],
+      ];
+    for (let j = 0; j < n; j++)
+      for (let i = 0; i < n; i++) {
+        const v = s.values[j * n + i];
+        if (v === null) continue;
+        const t = Math.max(
+            0,
+            Math.min(1, Math.log1p((v - s.minimum) / (span * 0.0002)) / Math.log1p(1 / 0.0002)),
+          ),
+          position = t * (palette.length - 1),
+          k = Math.min(palette.length - 2, Math.floor(position)),
+          f = position - k,
+          color = palette[k].map((a, c) => Math.round(a + (palette[k + 1][c] - a) * f));
+        ctx.fillStyle = 'rgb(' + color.join(',') + ')';
+        ctx.fillRect(pad + (i / n) * w, H - pad - ((j + 1) / n) * h, w / n + 1, h / n + 1);
+      }
+    ctx.strokeStyle = '#ffffff75';
+    ctx.lineWidth = 0.8;
+    for (const contour of plot.contours) {
+      ctx.beginPath();
+      for (const [a, b] of contour.segments) {
+        const p = toPixel(a),
+          q = toPixel(b);
+        ctx.moveTo(...p);
+        ctx.lineTo(...q);
+      }
+      ctx.stroke();
+    }
+  } else {
+    ctx.fillStyle = '#9aacbe';
+    ctx.font = '17px system-ui';
+    ctx.fillText('Computing objective landscape…', pad + 100, H / 2);
+  }
+  if (meta.bounds) {
+    const a = toPixel(meta.bounds.lower),
+      b = toPixel(meta.bounds.upper);
+    ctx.strokeStyle = '#284869';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 5]);
+    ctx.strokeRect(a[0], b[1], b[0] - a[0], a[1] - b[1]);
+    ctx.setLineDash([]);
+  }
+  if (meta.task === 'qp') {
+    ctx.strokeStyle = '#284869';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [0, 0],
+    ].forEach((p, i) => (i ? ctx.lineTo(...toPixel(p)) : ctx.moveTo(...toPixel(p))));
+    ctx.stroke();
+  }
+  ctx.strokeStyle = '#bac9db';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(pad, pad, w, h);
+  ctx.fillStyle = '#7d93ad';
+  ctx.font = '12px monospace';
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= 4; i++) {
+    const x = xmin + (i / 4) * (xmax - xmin),
+      y = ymin + (i / 4) * (ymax - ymin);
+    ctx.fillText(x.toFixed(1), pad + (i / 4) * w, H - pad + 22);
+    ctx.textAlign = 'right';
+    ctx.fillText(y.toFixed(1), pad - 10, H - pad - (i / 4) * h + 4);
+    ctx.textAlign = 'center';
+  }
+  ctx.font = '14px system-ui';
+  ctx.fillText('x₁', W / 2, H - 8);
+  ctx.save();
+  ctx.translate(13, H / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText('x₂', 0, 0);
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(pad, pad, w, h);
+  ctx.clip();
+  const trace = result?.trace ?? [],
+    count = Math.max(1, Math.ceil(trace.length * progress)),
+    points = trace.slice(0, count).filter((p) => p.x?.length === 2),
+    route = points.map((p) => toPixel(p.x));
+  ctx.strokeStyle = '#edac62';
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  route.forEach((p, i) => (i ? ctx.lineTo(...p) : ctx.moveTo(...p)));
+  ctx.stroke();
+  for (const p of route) {
+    ctx.fillStyle = '#f2c28b';
+    ctx.beginPath();
+    ctx.arc(...p, 2.2, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+  const dot = (point, color, radius) => {
+    const p = toPixel(point);
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(...p, radius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+  };
+  dot(start, '#244b78', 6);
+  if (points.length) dot(points.at(-1).x, '#eaa257', 6);
+  ctx.restore();
+}
+export function pointAt(canvas, meta, event) {
+  if (!meta.domain) return null;
+  const rect = canvas.getBoundingClientRect(),
+    x = ((event.clientX - rect.left) / rect.width) * 900,
+    y = ((event.clientY - rect.top) / rect.height) * 620;
+  if (x < 48 || x > 852 || y < 48 || y > 572) return null;
+  return [
+    meta.domain[0][0] + ((x - 48) / 804) * (meta.domain[0][1] - meta.domain[0][0]),
+    meta.domain[1][0] + ((572 - y) / 524) * (meta.domain[1][1] - meta.domain[1][0]),
+  ];
+}

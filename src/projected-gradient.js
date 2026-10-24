@@ -1,2 +1,40 @@
-import {run} from './run.js';import {boxProject} from './projections.js';import {add,dot,norm,infNorm} from './vector.js';
-export function projectedGradient(problem,x0,{lower,upper,...options}={}){const initial=boxProject(x0,lower,upper),mapping=(x,g)=>add(x,boxProject(add(x,g,-1),lower,upper),-1);return run(problem,initial,options,r=>{for(let k=0;k<r.options.maxIterations;k++){const residual=infNorm(mapping(r.x,r.g));if(residual<=r.options.gtol)return{...r.finish('converged','Projected-gradient tolerance satisfied'),optimalityResidual:residual};let alpha=1,accepted=null;for(let trial=0;trial<40;trial++){const x=boxProject(add(r.x,r.g,-alpha),lower,upper),step=add(x,r.x,-1),f=r.e.f(x);if(f<=r.f+1e-4*dot(r.g,step)){accepted={x,f,step};break;}alpha*=.5;}if(!accepted)return r.finish('line_search_failed');const tiny=r.tiny(accepted.step),g=r.e.g(accepted.x);r.update(accepted.x,accepted.f,g,{alpha,stepNorm:norm(accepted.step),projectedNorm:infNorm(mapping(accepted.x,g)),accepted:true});if(tiny&&infNorm(mapping(r.x,r.g))>r.options.gtol)return r.finish('stagnated');}return{...r.finish('max_iterations'),optimalityResidual:infNorm(mapping(r.x,r.g))};});}
+import { run } from './run.js';
+import { boxProject } from './projections.js';
+import { add, dot, norm, infNorm } from './vector.js';
+export function projectedGradient(problem, x0, { lower, upper, ...options } = {}) {
+  const initial = boxProject(x0, lower, upper),
+    mapping = (x, g) => add(x, boxProject(add(x, g, -1), lower, upper), -1);
+  return run(problem, initial, options, (r) => {
+    for (let k = 0; k < r.options.maxIterations; k++) {
+      const residual = infNorm(mapping(r.x, r.g));
+      if (residual <= r.options.gtol)
+        return {
+          ...r.finish('converged', 'Projected-gradient tolerance satisfied'),
+          optimalityResidual: residual,
+        };
+      let alpha = 1,
+        accepted = null;
+      for (let trial = 0; trial < 40; trial++) {
+        const x = boxProject(add(r.x, r.g, -alpha), lower, upper),
+          step = add(x, r.x, -1),
+          f = r.e.f(x);
+        if (f <= r.f + 1e-4 * dot(r.g, step)) {
+          accepted = { x, f, step };
+          break;
+        }
+        alpha *= 0.5;
+      }
+      if (!accepted) return r.finish('line_search_failed');
+      const tiny = r.tiny(accepted.step),
+        g = r.e.g(accepted.x);
+      r.update(accepted.x, accepted.f, g, {
+        alpha,
+        stepNorm: norm(accepted.step),
+        projectedNorm: infNorm(mapping(accepted.x, g)),
+        accepted: true,
+      });
+      if (tiny && infNorm(mapping(r.x, r.g)) > r.options.gtol) return r.finish('stagnated');
+    }
+    return { ...r.finish('max_iterations'), optimalityResidual: infNorm(mapping(r.x, r.g)) };
+  });
+}

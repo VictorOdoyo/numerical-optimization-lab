@@ -1,4 +1,48 @@
-import {options,vector,integer,requireThat} from './validation.js';import {createCase,CATALOG} from './catalog.js';import {METHODS} from './minimize.js';
-export function validateSession(input){options(input,['version','problem','method','start','seed','lambda','loss','options']);requireThat(input.version===1,'Unsupported session version');const seed=integer(input.seed??42,'seed',0,4294967295),lambda=input.lambda??.05,loss=input.loss??'huber';requireThat(Number.isFinite(lambda)&&lambda>=0&&lambda<=100,'Lambda must be 0..100');requireThat(['linear','huber','soft-l1','cauchy'].includes(loss),'Unknown robust loss');const c=createCase(input.problem,{seed,lambda,loss});requireThat(METHODS[input.method]?.tasks.includes(c.meta.task),'Incompatible method');const start=vector(input.start??c.meta.start);requireThat(start.length===c.problem.dimension,'Start dimension mismatch');const opts=input.options??{};options(opts,['maxIterations','maxEvaluations','gtol','xtol','ftol','memory','learningRate','initialStep','initialRadius','maxRadius']);for(const v of Object.values(opts))requireThat(Number.isFinite(v),'Session options must be finite numbers');return{version:1,problem:input.problem,method:input.method,start,seed,lambda,loss,options:{...opts}};}
-export function encodeSession(session){return JSON.stringify(validateSession(session),null,2);}
-export function decodeSession(text){requireThat(typeof text==='string'&&text.length<=65536,'Session text exceeds 64 KiB');return validateSession(JSON.parse(text));}
+import { options, vector, integer, requireThat } from './validation.js';
+import { createCase, CATALOG } from './catalog.js';
+import { METHODS } from './minimize.js';
+export function validateSession(input) {
+  options(input, ['version', 'problem', 'method', 'start', 'seed', 'lambda', 'loss', 'options']);
+  requireThat(input.version === 1, 'Unsupported session version');
+  const seed = integer(input.seed ?? 42, 'seed', 0, 4294967295),
+    lambda = input.lambda ?? 0.05,
+    loss = input.loss ?? 'huber';
+  requireThat(Number.isFinite(lambda) && lambda >= 0 && lambda <= 100, 'Lambda must be 0..100');
+  requireThat(['linear', 'huber', 'soft-l1', 'cauchy'].includes(loss), 'Unknown robust loss');
+  const c = createCase(input.problem, { seed, lambda, loss });
+  requireThat(METHODS[input.method]?.tasks.includes(c.meta.task), 'Incompatible method');
+  const start = vector(input.start ?? c.meta.start);
+  requireThat(start.length === c.problem.dimension, 'Start dimension mismatch');
+  const opts = input.options ?? {};
+  options(opts, [
+    'maxIterations',
+    'maxEvaluations',
+    'gtol',
+    'xtol',
+    'ftol',
+    'memory',
+    'learningRate',
+    'initialStep',
+    'initialRadius',
+    'maxRadius',
+  ]);
+  for (const v of Object.values(opts))
+    requireThat(Number.isFinite(v), 'Session options must be finite numbers');
+  return {
+    version: 1,
+    problem: input.problem,
+    method: input.method,
+    start,
+    seed,
+    lambda,
+    loss,
+    options: { ...opts },
+  };
+}
+export function encodeSession(session) {
+  return JSON.stringify(validateSession(session), null, 2);
+}
+export function decodeSession(text) {
+  requireThat(typeof text === 'string' && text.length <= 65536, 'Session text exceeds 64 KiB');
+  return validateSession(JSON.parse(text));
+}

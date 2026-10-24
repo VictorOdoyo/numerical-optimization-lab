@@ -1,2 +1,49 @@
 /** Marching squares with a center-value rule for ambiguous saddle cells. */
-export function contours(surface,levels){const n=surface.resolution,out=[];for(const level of levels){const segments=[];for(let y=0;y<n-1;y++)for(let x=0;x<n-1;x++){const values=[surface.values[y*n+x],surface.values[y*n+x+1],surface.values[(y+1)*n+x+1],surface.values[(y+1)*n+x]],points=[[surface.xs[x],surface.ys[y]],[surface.xs[x+1],surface.ys[y]],[surface.xs[x+1],surface.ys[y+1]],[surface.xs[x],surface.ys[y+1]]];if(values.some(v=>v===null))continue;const crossings=[];for(let e=0;e<4;e++){const j=(e+1)%4;if((values[e]>=level)===(values[j]>=level))continue;const t=(level-values[e])/(values[j]-values[e]);crossings.push({edge:e,p:points[e].map((v,k)=>v+t*(points[j][k]-v))});}if(crossings.length===2)segments.push(crossings.map(c=>c.p));else if(crossings.length===4){const center=values.reduce((a,b)=>a+b)/4,above0=values[0]>=level,pairs=(center>=level)===above0?[[0,1],[2,3]]:[[0,3],[1,2]];for(const[a,b]of pairs)segments.push([crossings[a].p,crossings[b].p]);}}out.push({level,segments});}return out;}
+export function contours(surface, levels) {
+  const n = surface.resolution,
+    out = [];
+  for (const level of levels) {
+    const segments = [];
+    for (let y = 0; y < n - 1; y++)
+      for (let x = 0; x < n - 1; x++) {
+        const values = [
+            surface.values[y * n + x],
+            surface.values[y * n + x + 1],
+            surface.values[(y + 1) * n + x + 1],
+            surface.values[(y + 1) * n + x],
+          ],
+          points = [
+            [surface.xs[x], surface.ys[y]],
+            [surface.xs[x + 1], surface.ys[y]],
+            [surface.xs[x + 1], surface.ys[y + 1]],
+            [surface.xs[x], surface.ys[y + 1]],
+          ];
+        if (values.some((v) => v === null)) continue;
+        const crossings = [];
+        for (let e = 0; e < 4; e++) {
+          const j = (e + 1) % 4;
+          if (values[e] >= level === values[j] >= level) continue;
+          const t = (level - values[e]) / (values[j] - values[e]);
+          crossings.push({ edge: e, p: points[e].map((v, k) => v + t * (points[j][k] - v)) });
+        }
+        if (crossings.length === 2) segments.push(crossings.map((c) => c.p));
+        else if (crossings.length === 4) {
+          const center = values.reduce((a, b) => a + b) / 4,
+            above0 = values[0] >= level,
+            pairs =
+              center >= level === above0
+                ? [
+                    [0, 1],
+                    [2, 3],
+                  ]
+                : [
+                    [0, 3],
+                    [1, 2],
+                  ];
+          for (const [a, b] of pairs) segments.push([crossings[a].p, crossings[b].p]);
+        }
+      }
+    out.push({ level, segments });
+  }
+  return out;
+}

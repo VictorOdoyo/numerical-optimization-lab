@@ -1,3 +1,33 @@
-import {matrix,requireThat} from './validation.js';import {transpose,matMul} from './matrix.js';import {eigenSymmetric} from './eigen.js';
+import { matrix, requireThat } from './validation.js';
+import { transpose, matMul } from './matrix.js';
+import { eigenSymmetric } from './eigen.js';
 /** Local linearized covariance; rank-deficient directions are explicitly reported. */
-export function covariance(Jinput,{variance=1,tolerance=1e-10}={}){const J=matrix(Jinput),n=J[0].length;requireThat(variance>=0&&Number.isFinite(variance),'Variance must be nonnegative');const info=matMul(transpose(J),J),e=eigenSymmetric(info),largest=Math.max(...e.values),keep=e.values.map(v=>v>tolerance*Math.max(Number.MIN_VALUE,largest)),rank=keep.filter(Boolean).length,C=Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>e.values.reduce((sum,v,k)=>sum+(keep[k]?variance*e.vectors[i][k]*e.vectors[j][k]/v:0),0)));return{covariance:C,rank,dimension:n,identifiable:rank===n,eigenvalues:e.values,condition:rank===n?largest/e.values[0]:Infinity,standardErrors:rank===n?C.map((r,i)=>Math.sqrt(Math.max(0,r[i]))):null,interpretation:'Local linearized covariance under supplied noise variance; pseudoinverse is not finite uncertainty in null directions'};}
+export function covariance(Jinput, { variance = 1, tolerance = 1e-10 } = {}) {
+  const J = matrix(Jinput),
+    n = J[0].length;
+  requireThat(variance >= 0 && Number.isFinite(variance), 'Variance must be nonnegative');
+  const info = matMul(transpose(J), J),
+    e = eigenSymmetric(info),
+    largest = Math.max(...e.values),
+    keep = e.values.map((v) => v > tolerance * Math.max(Number.MIN_VALUE, largest)),
+    rank = keep.filter(Boolean).length,
+    C = Array.from({ length: n }, (_, i) =>
+      Array.from({ length: n }, (_, j) =>
+        e.values.reduce(
+          (sum, v, k) => sum + (keep[k] ? (variance * e.vectors[i][k] * e.vectors[j][k]) / v : 0),
+          0,
+        ),
+      ),
+    );
+  return {
+    covariance: C,
+    rank,
+    dimension: n,
+    identifiable: rank === n,
+    eigenvalues: e.values,
+    condition: rank === n ? largest / e.values[0] : Infinity,
+    standardErrors: rank === n ? C.map((r, i) => Math.sqrt(Math.max(0, r[i]))) : null,
+    interpretation:
+      'Local linearized covariance under supplied noise variance; pseudoinverse is not finite uncertainty in null directions',
+  };
+}

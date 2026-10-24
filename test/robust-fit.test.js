@@ -1,2 +1,16 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {createCase} from '../src/catalog.js';import {solveCase} from '../src/minimize.js';
-test('robust decay fitting reduces known-parameter bias from deliberately contaminated observations',()=>{const robust=solveCase(createCase('decay',{seed:42,loss:'huber'}),'lm',{options:{gtol:1e-8}}),linear=solveCase(createCase('decay',{seed:42,loss:'linear'}),'lm',{options:{gtol:1e-8}}),error=r=>Math.hypot(r.x[0]-2,r.x[1]-.7);assert(error(robust)<error(linear));assert(error(robust)<.1);assert(robust.trace.filter(r=>r.accepted).every((r,i,a)=>i===0||r.f<=a[i-1].f));});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createCase } from '../src/catalog.js';
+import { solveCase } from '../src/minimize.js';
+test('robust decay fitting reduces known-parameter bias from deliberately contaminated observations', () => {
+  const robust = solveCase(createCase('decay', { seed: 42, loss: 'huber' }), 'lm', {
+      options: { gtol: 1e-8 },
+    }),
+    linear = solveCase(createCase('decay', { seed: 42, loss: 'linear' }), 'lm', {
+      options: { gtol: 1e-8 },
+    }),
+    error = (r) => Math.hypot(r.x[0] - 2, r.x[1] - 0.7);
+  assert(error(robust) < error(linear));
+  assert(error(robust) < 0.1);
+  assert(robust.trace.filter((r) => r.accepted).every((r, i, a) => i === 0 || r.f <= a[i - 1].f));
+});

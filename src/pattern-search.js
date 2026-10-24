@@ -1,2 +1,49 @@
-import {run} from './run.js';import {norm,add,distance} from './vector.js';import {requireThat} from './validation.js';
-export function patternSearch(problem,x0,options={}){const initialStep=options.initialStep??1;requireThat(initialStep>0&&Number.isFinite(initialStep),'Initial mesh must be positive');return run(problem,x0,options,r=>{let mesh=initialStep;for(let k=0;k<r.options.maxIterations;k++){const origin=[...r.x];let best=[...r.x],value=r.f;for(let i=0;i<best.length;i++)for(const sign of[1,-1]){const trial=[...best];trial[i]+=sign*mesh;const f=r.e.f(trial);if(f<value){best=trial;value=f;}}let operation='poll';if(value<r.f){const extrapolated=add(best,add(best,origin,-1)),f=r.e.f(extrapolated);if(f<value){best=extrapolated;value=f;operation='pattern';}}else{mesh*=.5;operation='refine';}const step=distance(best,r.x);r.update(best,value,null,{mesh,operation,stepNorm:step,accepted:step>0});if(mesh<=r.options.xtol*(1+norm(r.x)))return r.finish('converged','Mesh tolerance satisfied; no derivative certificate');}return r.finish('max_iterations');},{gradient:false,extra:['initialStep']});}
+import { run } from './run.js';
+import { norm, add, distance } from './vector.js';
+import { requireThat } from './validation.js';
+export function patternSearch(problem, x0, options = {}) {
+  const initialStep = options.initialStep ?? 1;
+  requireThat(initialStep > 0 && Number.isFinite(initialStep), 'Initial mesh must be positive');
+  return run(
+    problem,
+    x0,
+    options,
+    (r) => {
+      let mesh = initialStep;
+      for (let k = 0; k < r.options.maxIterations; k++) {
+        const origin = [...r.x];
+        let best = [...r.x],
+          value = r.f;
+        for (let i = 0; i < best.length; i++)
+          for (const sign of [1, -1]) {
+            const trial = [...best];
+            trial[i] += sign * mesh;
+            const f = r.e.f(trial);
+            if (f < value) {
+              best = trial;
+              value = f;
+            }
+          }
+        let operation = 'poll';
+        if (value < r.f) {
+          const extrapolated = add(best, add(best, origin, -1)),
+            f = r.e.f(extrapolated);
+          if (f < value) {
+            best = extrapolated;
+            value = f;
+            operation = 'pattern';
+          }
+        } else {
+          mesh *= 0.5;
+          operation = 'refine';
+        }
+        const step = distance(best, r.x);
+        r.update(best, value, null, { mesh, operation, stepNorm: step, accepted: step > 0 });
+        if (mesh <= r.options.xtol * (1 + norm(r.x)))
+          return r.finish('converged', 'Mesh tolerance satisfied; no derivative certificate');
+      }
+      return r.finish('max_iterations');
+    },
+    { gradient: false, extra: ['initialStep'] },
+  );
+}

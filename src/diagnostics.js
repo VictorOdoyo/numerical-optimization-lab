@@ -1,2 +1,40 @@
-import {Evaluator} from './evaluation.js';import {eigenSymmetric} from './eigen.js';import {infNorm} from './vector.js';import {checkGradient} from './differences.js';
-export function diagnose(problem,x,{gradientTolerance=1e-6,checkDerivatives=true}={}){const e=new Evaluator(problem),f=e.f(x),g=e.g(x),H=e.H(x),spectrum=eigenSymmetric(H),smallest=spectrum.values[0],largest=spectrum.values.at(-1),stationary=infNorm(g)<=gradientTolerance,scale=Math.max(1,...spectrum.values.map(Math.abs)),curvature=smallest>1e-10*scale?'positive-definite':smallest<-1e-10*scale?'negative-curvature':'semidefinite';return{f,gradient:g,gradientNorm:infNorm(g),stationary,curvature,eigenvalues:spectrum.values,eigenConverged:spectrum.converged,classification:!stationary?'nonstationary':curvature==='positive-definite'?'strict-local-minimum-candidate':curvature==='negative-curvature'?'stationary-with-negative-curvature':'inconclusive-stationary-point',condition:smallest>0?largest/smallest:null,derivativeCheck:checkDerivatives&&problem.g?checkGradient(problem,x):null,evaluations:e.counts};}
+import { Evaluator } from './evaluation.js';
+import { eigenSymmetric } from './eigen.js';
+import { infNorm } from './vector.js';
+import { checkGradient } from './differences.js';
+export function diagnose(problem, x, { gradientTolerance = 1e-6, checkDerivatives = true } = {}) {
+  const e = new Evaluator(problem),
+    f = e.f(x),
+    g = e.g(x),
+    H = e.H(x),
+    spectrum = eigenSymmetric(H),
+    smallest = spectrum.values[0],
+    largest = spectrum.values.at(-1),
+    stationary = infNorm(g) <= gradientTolerance,
+    scale = Math.max(1, ...spectrum.values.map(Math.abs)),
+    curvature =
+      smallest > 1e-10 * scale
+        ? 'positive-definite'
+        : smallest < -1e-10 * scale
+          ? 'negative-curvature'
+          : 'semidefinite';
+  return {
+    f,
+    gradient: g,
+    gradientNorm: infNorm(g),
+    stationary,
+    curvature,
+    eigenvalues: spectrum.values,
+    eigenConverged: spectrum.converged,
+    classification: !stationary
+      ? 'nonstationary'
+      : curvature === 'positive-definite'
+        ? 'strict-local-minimum-candidate'
+        : curvature === 'negative-curvature'
+          ? 'stationary-with-negative-curvature'
+          : 'inconclusive-stationary-point',
+    condition: smallest > 0 ? largest / smallest : null,
+    derivativeCheck: checkDerivatives && problem.g ? checkGradient(problem, x) : null,
+    evaluations: e.counts,
+  };
+}

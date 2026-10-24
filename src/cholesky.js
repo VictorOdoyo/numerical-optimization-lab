@@ -1,3 +1,33 @@
-import {matrix,vector,requireThat} from './validation.js';import {symmetric} from './matrix.js';
-export function cholesky(input,{shift=0}={}){const A=matrix(input),n=A.length;requireThat(symmetric(A),'Cholesky requires symmetry');requireThat(Number.isFinite(shift)&&shift>=0,'Shift must be nonnegative');const L=Array.from({length:n},()=>Array(n).fill(0));for(let i=0;i<n;i++)for(let j=0;j<=i;j++){let v=A[i][j]+(i===j?shift:0);for(let k=0;k<j;k++)v-=L[i][k]*L[j][k];if(i===j){requireThat(v>0&&Number.isFinite(v),'Matrix is not positive definite','NOT_SPD');L[i][j]=Math.sqrt(v);}else L[i][j]=v/L[j][j];}return L;}
-export function choleskySolve(L,rhs){const x=vector(rhs),n=L.length;requireThat(x.length===n,'RHS dimensions differ');for(let i=0;i<n;i++){for(let j=0;j<i;j++)x[i]-=L[i][j]*x[j];x[i]/=L[i][i];}for(let i=n-1;i>=0;i--){for(let j=i+1;j<n;j++)x[i]-=L[j][i]*x[j];x[i]/=L[i][i];}return x;}
+import { matrix, vector, requireThat } from './validation.js';
+import { symmetric } from './matrix.js';
+export function cholesky(input, { shift = 0 } = {}) {
+  const A = matrix(input),
+    n = A.length;
+  requireThat(symmetric(A), 'Cholesky requires symmetry');
+  requireThat(Number.isFinite(shift) && shift >= 0, 'Shift must be nonnegative');
+  const L = Array.from({ length: n }, () => Array(n).fill(0));
+  for (let i = 0; i < n; i++)
+    for (let j = 0; j <= i; j++) {
+      let v = A[i][j] + (i === j ? shift : 0);
+      for (let k = 0; k < j; k++) v -= L[i][k] * L[j][k];
+      if (i === j) {
+        requireThat(v > 0 && Number.isFinite(v), 'Matrix is not positive definite', 'NOT_SPD');
+        L[i][j] = Math.sqrt(v);
+      } else L[i][j] = v / L[j][j];
+    }
+  return L;
+}
+export function choleskySolve(L, rhs) {
+  const x = vector(rhs),
+    n = L.length;
+  requireThat(x.length === n, 'RHS dimensions differ');
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < i; j++) x[i] -= L[i][j] * x[j];
+    x[i] /= L[i][i];
+  }
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = i + 1; j < n; j++) x[i] -= L[j][i] * x[j];
+    x[i] /= L[i][i];
+  }
+  return x;
+}

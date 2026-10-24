@@ -1,2 +1,54 @@
-import {matrix,requireThat,integer} from './validation.js';import {symmetric,identity} from './matrix.js';
-export function eigenSymmetric(input,{tolerance=1e-12,maxSweeps=100}={}){const A=matrix(input),n=A.length;requireThat(symmetric(A),'Eigenproblem requires symmetry');integer(maxSweeps,'maxSweeps',1,1000);const V=identity(n);let converged=false,sweeps=0;for(;sweeps<maxSweeps;sweeps++){let off=0;for(let p=0;p<n;p++)for(let q=p+1;q<n;q++)off=Math.max(off,Math.abs(A[p][q]));const scale=Math.max(Number.MIN_VALUE,...A.map((r,i)=>Math.abs(r[i])));if(off<=tolerance*scale){converged=true;break;}for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){if(Math.abs(A[p][q])<=tolerance*scale/n)continue;const tau=(A[q][q]-A[p][p])/(2*A[p][q]),t=(tau>=0?1:-1)/(Math.abs(tau)+Math.hypot(1,tau)),c=1/Math.hypot(1,t),s=t*c,ap=A[p][p],aq=A[q][q],a=A[p][q];A[p][p]=ap-t*a;A[q][q]=aq+t*a;A[p][q]=A[q][p]=0;for(let k=0;k<n;k++){if(k!==p&&k!==q){const u=A[k][p],v=A[k][q];A[k][p]=A[p][k]=c*u-s*v;A[k][q]=A[q][k]=s*u+c*v;}const u=V[k][p],v=V[k][q];V[k][p]=c*u-s*v;V[k][q]=s*u+c*v;}}}const order=Array.from({length:n},(_,i)=>i).sort((i,j)=>A[i][i]-A[j][j]);return{values:order.map(i=>A[i][i]),vectors:V.map(row=>order.map(i=>row[i])),converged,sweeps};}
+import { matrix, requireThat, integer } from './validation.js';
+import { symmetric, identity } from './matrix.js';
+export function eigenSymmetric(input, { tolerance = 1e-12, maxSweeps = 100 } = {}) {
+  const A = matrix(input),
+    n = A.length;
+  requireThat(symmetric(A), 'Eigenproblem requires symmetry');
+  integer(maxSweeps, 'maxSweeps', 1, 1000);
+  const V = identity(n);
+  let converged = false,
+    sweeps = 0;
+  for (; sweeps < maxSweeps; sweeps++) {
+    let off = 0;
+    for (let p = 0; p < n; p++)
+      for (let q = p + 1; q < n; q++) off = Math.max(off, Math.abs(A[p][q]));
+    const scale = Math.max(Number.MIN_VALUE, ...A.map((r, i) => Math.abs(r[i])));
+    if (off <= tolerance * scale) {
+      converged = true;
+      break;
+    }
+    for (let p = 0; p < n; p++)
+      for (let q = p + 1; q < n; q++) {
+        if (Math.abs(A[p][q]) <= (tolerance * scale) / n) continue;
+        const tau = (A[q][q] - A[p][p]) / (2 * A[p][q]),
+          t = (tau >= 0 ? 1 : -1) / (Math.abs(tau) + Math.hypot(1, tau)),
+          c = 1 / Math.hypot(1, t),
+          s = t * c,
+          ap = A[p][p],
+          aq = A[q][q],
+          a = A[p][q];
+        A[p][p] = ap - t * a;
+        A[q][q] = aq + t * a;
+        A[p][q] = A[q][p] = 0;
+        for (let k = 0; k < n; k++) {
+          if (k !== p && k !== q) {
+            const u = A[k][p],
+              v = A[k][q];
+            A[k][p] = A[p][k] = c * u - s * v;
+            A[k][q] = A[q][k] = s * u + c * v;
+          }
+          const u = V[k][p],
+            v = V[k][q];
+          V[k][p] = c * u - s * v;
+          V[k][q] = s * u + c * v;
+        }
+      }
+  }
+  const order = Array.from({ length: n }, (_, i) => i).sort((i, j) => A[i][i] - A[j][j]);
+  return {
+    values: order.map((i) => A[i][i]),
+    vectors: V.map((row) => order.map((i) => row[i])),
+    converged,
+    sweeps,
+  };
+}

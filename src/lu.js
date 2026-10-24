@@ -1,5 +1,52 @@
-import {matrix,vector,requireThat} from './validation.js';import {norm,add} from './vector.js';import {matVec} from './matrix.js';
-export function luFactor(input,{tolerance=1e-14}={}){const A=matrix(input),n=A.length;requireThat(n===A[0].length,'LU requires a square matrix');const permutation=Array.from({length:n},(_,i)=>i),rowScale=A.map(row=>Math.max(...row.map(Math.abs)));let sign=1;for(let k=0;k<n;k++){let pivot=k;for(let i=k+1;i<n;i++)if(Math.abs(A[i][k])/(rowScale[i]||1)>Math.abs(A[pivot][k])/(rowScale[pivot]||1))pivot=i;requireThat(Math.abs(A[pivot][k])>tolerance*(rowScale[pivot]||1),'Matrix is numerically singular','SINGULAR');if(pivot!==k){[A[k],A[pivot]]=[A[pivot],A[k]];[permutation[k],permutation[pivot]]=[permutation[pivot],permutation[k]];[rowScale[k],rowScale[pivot]]=[rowScale[pivot],rowScale[k]];sign=-sign;}for(let i=k+1;i<n;i++){A[i][k]/=A[k][k];for(let j=k+1;j<n;j++)A[i][j]-=A[i][k]*A[k][j];}}return{LU:A,permutation,sign};}
-export function luSolve(factor,rhs){const b=vector(rhs),{LU:A,permutation:p}=factor,n=A.length;requireThat(b.length===n,'RHS dimensions differ');const x=p.map(i=>b[i]);for(let i=0;i<n;i++)for(let j=0;j<i;j++)x[i]-=A[i][j]*x[j];for(let i=n-1;i>=0;i--){for(let j=i+1;j<n;j++)x[i]-=A[i][j]*x[j];x[i]/=A[i][i];}return x;}
-export function solve(A,b){return luSolve(luFactor(A),b);}
-export function relativeResidual(A,x,b){return norm(add(matVec(A,x),b,-1))/Math.max(Number.MIN_VALUE,norm(b));}
+import { matrix, vector, requireThat } from './validation.js';
+import { norm, add } from './vector.js';
+import { matVec } from './matrix.js';
+export function luFactor(input, { tolerance = 1e-14 } = {}) {
+  const A = matrix(input),
+    n = A.length;
+  requireThat(n === A[0].length, 'LU requires a square matrix');
+  const permutation = Array.from({ length: n }, (_, i) => i),
+    rowScale = A.map((row) => Math.max(...row.map(Math.abs)));
+  let sign = 1;
+  for (let k = 0; k < n; k++) {
+    let pivot = k;
+    for (let i = k + 1; i < n; i++)
+      if (Math.abs(A[i][k]) / (rowScale[i] || 1) > Math.abs(A[pivot][k]) / (rowScale[pivot] || 1))
+        pivot = i;
+    requireThat(
+      Math.abs(A[pivot][k]) > tolerance * (rowScale[pivot] || 1),
+      'Matrix is numerically singular',
+      'SINGULAR',
+    );
+    if (pivot !== k) {
+      [A[k], A[pivot]] = [A[pivot], A[k]];
+      [permutation[k], permutation[pivot]] = [permutation[pivot], permutation[k]];
+      [rowScale[k], rowScale[pivot]] = [rowScale[pivot], rowScale[k]];
+      sign = -sign;
+    }
+    for (let i = k + 1; i < n; i++) {
+      A[i][k] /= A[k][k];
+      for (let j = k + 1; j < n; j++) A[i][j] -= A[i][k] * A[k][j];
+    }
+  }
+  return { LU: A, permutation, sign };
+}
+export function luSolve(factor, rhs) {
+  const b = vector(rhs),
+    { LU: A, permutation: p } = factor,
+    n = A.length;
+  requireThat(b.length === n, 'RHS dimensions differ');
+  const x = p.map((i) => b[i]);
+  for (let i = 0; i < n; i++) for (let j = 0; j < i; j++) x[i] -= A[i][j] * x[j];
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = i + 1; j < n; j++) x[i] -= A[i][j] * x[j];
+    x[i] /= A[i][i];
+  }
+  return x;
+}
+export function solve(A, b) {
+  return luSolve(luFactor(A), b);
+}
+export function relativeResidual(A, x, b) {
+  return norm(add(matVec(A, x), b, -1)) / Math.max(Number.MIN_VALUE, norm(b));
+}

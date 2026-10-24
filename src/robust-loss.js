@@ -1,3 +1,32 @@
-import {requireThat} from './validation.js';
+import { requireThat } from './validation.js';
 /** Returns half-loss cost, score psi, and nonnegative IRLS/Gauss-Newton weight. */
-export function robustLoss(residual,{loss='linear',scale=1}={}){requireThat(Number.isFinite(residual)&&Number.isFinite(scale)&&scale>0,'Residual and scale must be finite, scale positive');const a=Math.abs(residual),u=residual/scale;switch(loss){case'linear':return{cost:.5*residual*residual,psi:residual,weight:1};case'huber':return a<=scale?{cost:.5*residual*residual,psi:residual,weight:1}:{cost:scale*a-.5*scale*scale,psi:scale*Math.sign(residual),weight:scale/a};case'soft-l1':{const q=Math.hypot(1,u);return{cost:scale*scale*(q-1),psi:residual/q,weight:1/q};}case'cauchy':{const q=1+u*u;return{cost:.5*scale*scale*Math.log1p(u*u),psi:residual/q,weight:1/q};}default:throw new Error('Unknown robust loss');}}
+export function robustLoss(residual, { loss = 'linear', scale = 1 } = {}) {
+  requireThat(
+    Number.isFinite(residual) && Number.isFinite(scale) && scale > 0,
+    'Residual and scale must be finite, scale positive',
+  );
+  const a = Math.abs(residual),
+    u = residual / scale;
+  switch (loss) {
+    case 'linear':
+      return { cost: 0.5 * residual * residual, psi: residual, weight: 1 };
+    case 'huber':
+      return a <= scale
+        ? { cost: 0.5 * residual * residual, psi: residual, weight: 1 }
+        : {
+            cost: scale * a - 0.5 * scale * scale,
+            psi: scale * Math.sign(residual),
+            weight: scale / a,
+          };
+    case 'soft-l1': {
+      const q = Math.hypot(1, u);
+      return { cost: scale * scale * (q - 1), psi: residual / q, weight: 1 / q };
+    }
+    case 'cauchy': {
+      const q = 1 + u * u;
+      return { cost: 0.5 * scale * scale * Math.log1p(u * u), psi: residual / q, weight: 1 / q };
+    }
+    default:
+      throw new Error('Unknown robust loss');
+  }
+}

@@ -18,13 +18,13 @@ Requires Node.js 24 or newer. Run npm ci, then npm start. Open http://127.0.0.1:
 
 ## Use the library
 
-~~~js
+```js
 import { bfgs, rosenbrockProblem, createCase, solveCase } from './src/index.js';
-const result = bfgs(rosenbrockProblem(), [-1.2, 1], {gtol: 1e-7});
+const result = bfgs(rosenbrockProblem(), [-1.2, 1], { gtol: 1e-7 });
 console.log(result.status, result.f, result.evaluations);
 const constrained = solveCase(createCase('box'), 'projected');
 console.log(constrained.optimalityResidual);
-~~~
+```
 
 Run npm test, npm run benchmark, npm run format:check and npm run package:check. Install Chromium using npx playwright install chromium, then run npm run test:browser. Independent references use python validation/scipy_oracles.py after installing validation/requirements.txt; NODE_BINARY can select Node 24 explicitly.
 
