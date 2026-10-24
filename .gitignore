@@ -2,3 +2,4 @@ node_modules/
 results/
 artifacts/
 *.tgz
+.oracle-venv/
